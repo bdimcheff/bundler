@@ -83,8 +83,11 @@ module Bundler
       end
 
       def dependencies
-        @dependencies ||= @details["dependencies"].map do |dep, opts|
-          Bundler::Dependency.new(dep, opts.delete("version"), opts)
+        @dependencies ||= @details["specs"].inject([]) do |deps, args|
+          dep, details = args.to_a.flatten
+          opts = @details["dependencies"][dep]
+          deps << Bundler::Dependency.new(dep, opts.delete("version"), opts) if opts
+          deps
         end
       end
     end
