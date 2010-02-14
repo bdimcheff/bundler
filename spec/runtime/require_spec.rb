@@ -70,7 +70,43 @@ describe "Bundler.require" do
     out = ruby("require 'bundler'; Bundler.setup(:default, :bar); Bundler.require(:default, :bar)")
     out.should == "two\nbaz\nqux"
   end
-
+  
+  # This is what my patch does
+  it "requires the locked gems in Resolver order" do
+    gemfile <<-G
+      path "#{lib_path}"
+      gem "one", :require => %w(baz qux)
+      gem "three"
+      gem "six"
+    G
+    
+    bundle :lock
+    
+    out = ruby("require 'bundler'; Bundler.setup; Bundler.require")
+    
+    # this is in Resolver order, not Gemfile order
+    # this should pass only with my patch
+    out.should == "baz\nqux\nsix\nthree"
+  end
+  
+  # This is how unlocked gems work
+  it "requires the unlocked gems in Gemfile order" do
+    gemfile <<-G
+      path "#{lib_path}"
+      gem "one", :require => %w(baz qux)
+      gem "three"
+      gem "six"
+    G
+    
+    # bundle :lock
+    
+    out = ruby("require 'bundler'; Bundler.setup; Bundler.require")
+    
+    # this is in Gemfile order, not Resolver order
+    # this should pass on 0.9.5
+    out.should == "baz\nqux\nthree\nsix"
+  end
+    
   it "allows requiring gems with non standard names explicitly" do
     run "Bundler.require ; require 'mofive'"
     out.should == "two\nfive"
