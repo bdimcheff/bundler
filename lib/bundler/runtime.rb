@@ -186,7 +186,15 @@ module Bundler
     def autorequires_for_groups(*groups)
       groups.map! { |g| g.to_sym }
       autorequires = Hash.new { |h,k| h[k] = [] }
-      @definition.dependencies.each do |dep|
+      
+      dependencies_by_name = @definition.dependencies.inject({}) { |deps, dep| deps[dep.name] = dep; deps }
+      
+      spec_names = specs_for(*groups).map {|spec| spec.name}
+      dependency_names = @definition.dependencies.map {|dep| dep.name}
+          
+      ordered_dependencies = (spec_names + dependency_names).uniq.map { |spec| dependencies_by_name[spec] }.compact
+      
+      ordered_dependencies.each do |dep|
         dep.groups.each do |group|
           # If there is no autorequire, then rescue from
           # autorequiring the gems name

@@ -70,7 +70,35 @@ describe "Bundler.require" do
     out = ruby("require 'bundler'; Bundler.setup(:default, :bar); Bundler.require(:default, :bar)")
     out.should == "two\nbaz\nqux"
   end
-
+  
+  it "requires the locked gems in Resolver order" do
+    gemfile <<-G
+      path "#{lib_path}"
+      gem "two"
+      gem "one", :require => %w(baz qux)
+      gem "three"
+    G
+    
+    bundle :lock
+    
+    out = ruby("require 'bundler'; Bundler.setup; Bundler.require")
+    
+    out.should == "baz\nqux\nthree\ntwo"
+  end
+  
+  it "requires the unlocked gems in Resolver order" do
+    gemfile <<-G
+      path "#{lib_path}"
+      gem "two"
+      gem "one", :require => %w(baz qux)
+      gem "three"
+    G
+        
+    out = ruby("require 'bundler'; Bundler.setup; Bundler.require")
+    
+    out.should == "baz\nqux\nthree\ntwo"
+  end
+    
   it "allows requiring gems with non standard names explicitly" do
     run "Bundler.require ; require 'mofive'"
     out.should == "two\nfive"
