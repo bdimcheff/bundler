@@ -14,6 +14,7 @@ describe "Bundler.require" do
 
     build_lib "three", "1.0.0" do |s|
       s.write "lib/three.rb", "puts 'three'"
+      s.add_dependency "seven", "= 1.0.0"
     end
 
     build_lib "four", "1.0.0" do |s|
